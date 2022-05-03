@@ -1,5 +1,6 @@
 namespace AddressRegistry.StreetName
 {
+    using System;
     using Events;
     using Exceptions;
 
@@ -47,20 +48,28 @@ namespace AddressRegistry.StreetName
 
         private void When(AddressWasMigratedToStreetName @event)
         {
-            var address = new StreetNameAddress(ApplyChange);
-            address.Route(@event);
-
-            if (@event.ParentPersistentLocalId.HasValue)
+            try
             {
-                if (!StreetNameAddresses.HasPersistentLocalId(new AddressPersistentLocalId(@event.ParentPersistentLocalId.Value), out var parent))
+                var address = new StreetNameAddress(ApplyChange);
+                address.Route(@event);
+
+                if (@event.ParentPersistentLocalId.HasValue)
                 {
-                    throw new ParentAddressNotFoundException();
+                    if (!StreetNameAddresses.HasPersistentLocalId(
+                            new AddressPersistentLocalId(@event.ParentPersistentLocalId.Value), out var parent))
+                    {
+                        throw new ParentAddressNotFoundException();
+                    }
+
+                    parent!.AddChild(address);
                 }
 
-                parent!.AddChild(address);
+                StreetNameAddresses.Add(address);
             }
+            catch (Exception e)
+            {
 
-            StreetNameAddresses.Add(address);
+            }
         }
     }
 }
