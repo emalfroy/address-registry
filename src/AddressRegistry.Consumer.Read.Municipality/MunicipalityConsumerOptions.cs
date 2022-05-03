@@ -1,11 +1,11 @@
 namespace AddressRegistry.Consumer.Read.Municipality
 {
-    public class ConsumerOptions
+    public class MunicipalityConsumerOptions
     {
         public string Topic { get; }
         public string ConsumerGroupSuffix { get; }
 
-        public ConsumerOptions(string topic, string consumerGroupSuffix)
+        public MunicipalityConsumerOptions(string topic, string consumerGroupSuffix)
         {
             Topic = topic;
             ConsumerGroupSuffix = consumerGroupSuffix;

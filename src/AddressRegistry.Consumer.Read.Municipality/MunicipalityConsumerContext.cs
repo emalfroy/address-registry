@@ -9,23 +9,23 @@ namespace AddressRegistry.Consumer.Read.Municipality
     using Microsoft.EntityFrameworkCore;
     using Projections;
 
-    public class ConsumerContext : RunnerDbContext<ConsumerContext>
+    public class MunicipalityConsumerContext : RunnerDbContext<MunicipalityConsumerContext>
     {
         public DbSet<MunicipalityLatestItem> MunicipalityLatestItems { get; set; }
 
         // This needs to be here to please EF
-        public ConsumerContext()
+        public MunicipalityConsumerContext()
         { }
 
         // This needs to be DbContextOptions<T> for Autofac!
-        public ConsumerContext(DbContextOptions<ConsumerContext> options)
+        public MunicipalityConsumerContext(DbContextOptions<MunicipalityConsumerContext> options)
             : base(options)
         { }
 
         public override string ProjectionStateSchema => Schema.ConsumerReadMunicipality;
     }
 
-    public class ConsumerContextFactory : RunnerDbContextMigrationFactory<ConsumerContext>
+    public class ConsumerContextFactory : RunnerDbContextMigrationFactory<MunicipalityConsumerContext>
     {
         public ConsumerContextFactory()
             : this("ConsumerAdmin")
@@ -39,15 +39,15 @@ namespace AddressRegistry.Consumer.Read.Municipality
             })
         { }
 
-        protected override ConsumerContext CreateContext(DbContextOptions<ConsumerContext> migrationContextOptions) => new ConsumerContext(migrationContextOptions);
+        protected override MunicipalityConsumerContext CreateContext(DbContextOptions<MunicipalityConsumerContext> migrationContextOptions) => new MunicipalityConsumerContext(migrationContextOptions);
 
-        public ConsumerContext Create(DbContextOptions<ConsumerContext> options) => CreateContext(options);
+        public MunicipalityConsumerContext Create(DbContextOptions<MunicipalityConsumerContext> options) => CreateContext(options);
     }
 
     public static class AddressDetailExtensions
     {
         public static async Task<MunicipalityLatestItem> FindAndUpdate(
-            this Func<ConsumerContext> contextFactory,
+            this Func<MunicipalityConsumerContext> contextFactory,
             Guid municipalityId,
             Action<MunicipalityLatestItem> updateFunc,
             CancellationToken ct)
@@ -69,7 +69,7 @@ namespace AddressRegistry.Consumer.Read.Municipality
         }
 
         public static async Task<MunicipalityLatestItem> FindAndUpdate(
-            this ConsumerContext context,
+            this MunicipalityConsumerContext context,
             Guid municipalityId,
             Action<MunicipalityLatestItem> updateFunc,
             CancellationToken ct)

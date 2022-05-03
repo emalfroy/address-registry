@@ -62,11 +62,11 @@ namespace AddressRegistry.Consumer.Read.Municipality.Infrastructure
 
                 var topic = $"{configuration["Topic"]}" ?? throw new ArgumentException("Configuration has no Municipality Topic.");
                 var consumerGroupSuffix = configuration["ConsumerGroupSuffix"];
-                var consumerOptions = new ConsumerOptions(topic, consumerGroupSuffix);
+                var consumerOptions = new MunicipalityConsumerOptions(topic, consumerGroupSuffix);
 
                 var actualContainer = container.GetRequiredService<ILifetimeScope>();
 
-                var consumer = new Consumer(actualContainer, loggerFactory, kafkaOptions, consumerOptions);
+                var consumer = new MunicipalityConsumer(actualContainer, loggerFactory, kafkaOptions, consumerOptions);
                 var consumerTask = consumer.Start(cancellationToken);
 
                 //var projectionsManager = actualContainer.Resolve<IConnectedProjectionsManager>();
@@ -99,7 +99,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Infrastructure
             var loggerFactory = tempProvider.GetRequiredService<ILoggerFactory>();
 
             builder.RegisterModule(new ApiModule(configuration, services, loggerFactory));
-            builder.RegisterModule(new ConsumerModule(configuration, services, loggerFactory));
+            builder.RegisterModule(new MunicipalityConsumerModule(configuration, services, loggerFactory, ServiceLifetime.Transient));
             //builder.RegisterModule(new ProjectorModule(configuration));
 
             builder.Populate(services);

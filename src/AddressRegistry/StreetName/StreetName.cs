@@ -73,45 +73,38 @@ namespace AddressRegistry.StreetName
             bool isRemoved,
             AddressId? parentAddressId)
         {
-            try
+            if (!RegionFilter.IsFlemishRegion(MigratedNisCode))
             {
-                if (!RegionFilter.IsFlemishRegion(MigratedNisCode))
-                {
-                    return;
-                }
-
-                if (StreetNameAddresses.HasPersistentLocalId(addressPersistentLocalId))
-                {
-                    throw new InvalidOperationException(
-                        $"Cannot migrate address with id '{addressPersistentLocalId}' to streetname '{PersistentLocalId}'.");
-                }
-
-                AddressPersistentLocalId? parentPersistentLocalId = null;
-                if (!EqualityComparer<Guid>.Default.Equals(parentAddressId ?? Guid.Empty, Guid.Empty))
-                {
-                    parentPersistentLocalId = StreetNameAddresses
-                        .GetByLegacyAddressId(parentAddressId ?? AddressId.Default).AddressPersistentLocalId;
-                }
-
-                ApplyChange(new AddressWasMigratedToStreetName(
-                    PersistentLocalId,
-                    addressId,
-                    streetNameId,
-                    addressPersistentLocalId,
-                    addressStatus,
-                    houseNumber,
-                    boxNumber,
-                    geometry,
-                    officiallyAssigned ?? false,
-                    postalCode,
-                    isCompleted,
-                    isRemoved,
-                    parentPersistentLocalId));
+                return;
             }
-            catch (Exception e)
+
+            if (StreetNameAddresses.HasPersistentLocalId(addressPersistentLocalId))
             {
-
+                throw new InvalidOperationException(
+                    $"Cannot migrate address with id '{addressPersistentLocalId}' to streetname '{PersistentLocalId}'.");
             }
+
+            AddressPersistentLocalId? parentPersistentLocalId = null;
+            if (!EqualityComparer<Guid>.Default.Equals(parentAddressId ?? Guid.Empty, Guid.Empty))
+            {
+                parentPersistentLocalId = StreetNameAddresses
+                    .GetByLegacyAddressId(parentAddressId ?? AddressId.Default).AddressPersistentLocalId;
+            }
+
+            ApplyChange(new AddressWasMigratedToStreetName(
+                PersistentLocalId,
+                addressId,
+                streetNameId,
+                addressPersistentLocalId,
+                addressStatus,
+                houseNumber,
+                boxNumber,
+                geometry,
+                officiallyAssigned ?? false,
+                postalCode,
+                isCompleted,
+                isRemoved,
+                parentPersistentLocalId));
         }
 
         #region Metadata

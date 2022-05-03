@@ -1,15 +1,24 @@
 namespace AddressRegistry.Consumer.Read.Municipality.Projections
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
+    using Be.Vlaanderen.Basisregisters.GrAr.Contracts;
+    using Be.Vlaanderen.Basisregisters.GrAr.Contracts.Common;
     using Be.Vlaanderen.Basisregisters.GrAr.Contracts.MunicipalityRegistry;
     using Be.Vlaanderen.Basisregisters.GrAr.Legacy;
     using Be.Vlaanderen.Basisregisters.ProjectionHandling.Connector;
     using Be.Vlaanderen.Basisregisters.Utilities.HexByteConvertor;
     using NodaTime.Text;
 
-    public class MunicipalityProjections : ConnectedProjection<ConsumerContext>
+    public class MunicipalityProjections : ConnectedProjection<MunicipalityConsumerContext>
     {
+        private void UpdateVersionTimestamp(Provenance provenance, MunicipalityLatestItem municipality)
+        {
+            var timestamp = InstantPattern.General.Parse(provenance.Timestamp).Value;
+            municipality.VersionTimestamp = timestamp;
+        }
+
         public MunicipalityProjections()
         {
             When<MunicipalityWasRegistered>(async (context, message, ct) =>
@@ -30,6 +39,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.Status = MunicipalityStatus.Current;
+                    UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
 
@@ -38,6 +48,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.Status = MunicipalityStatus.Current;
+                    UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
 
@@ -46,6 +57,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.Status = MunicipalityStatus.Retired;
+                    UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
 
@@ -54,6 +66,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.Status = MunicipalityStatus.Retired;
+                    UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
 
@@ -62,6 +75,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.ExtendedWkbGeometry = message.ExtendedWkbGeometry.ToByteArray();
+                    UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
 
@@ -70,6 +84,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.ExtendedWkbGeometry = null;
+                    UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
 
@@ -78,6 +93,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.ExtendedWkbGeometry = null;
+                    UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
 
@@ -86,6 +102,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.ExtendedWkbGeometry = message.ExtendedWkbGeometry.ToByteArray();
+                    UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
 
@@ -94,7 +111,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
                     var taal = StringToTaal(message.Language);
-                    SetMunicipalityName(taal, municipality, null);
+                    SetMunicipalityName(taal, municipality, message.Name);
+                    UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
 
@@ -104,6 +122,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
                 {
                     var taal = StringToTaal(message.Language);
                     SetMunicipalityName(taal, municipality, null);
+                    UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
 
@@ -113,6 +132,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
                 {
                     var taal = StringToTaal(message.Language);
                     SetMunicipalityName(taal, municipality, message.Name);
+                    UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
 
@@ -122,6 +142,17 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
                 {
                     var taal = StringToTaal(message.Language);
                     SetMunicipalityName(taal, municipality, null);
+                    UpdateVersionTimestamp(message.Provenance, municipality);
+                }, ct);
+            });
+
+
+            When<MunicipalityNisCodeWasDefined>(async (contextFactory, message, ct) =>
+            {
+                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                {
+                    municipality.NisCode = message.NisCode;
+                    UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
 
@@ -130,14 +161,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.NisCode = message.NisCode;
-                }, ct);
-            });
-
-            When<MunicipalityNisCodeWasDefined>(async (contextFactory, message, ct) =>
-            {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
-                {
-                    municipality.NisCode = message.NisCode;
+                    UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
 
@@ -145,7 +169,11 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
             {
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
-                    municipality.OfficialLanguages.Add(message.Language);
+                    var newList = new List<string>();
+                    newList.AddRange(municipality.OfficialLanguages);
+                    newList.Add(message.Language);
+                    municipality.OfficialLanguages = newList;
+                    UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
 
@@ -157,20 +185,25 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
                     if (language != null)
                     {
-                        municipality.OfficialLanguages.Remove(language);
+                        var newList = new List<string>();
+                        newList.AddRange(municipality.OfficialLanguages);
+                        newList.Remove(message.Language);
+                        municipality.OfficialLanguages = newList;
+                        UpdateVersionTimestamp(message.Provenance, municipality);
                     }
                 }, ct);
             });
         }
 
-        private static Taal StringToTaal(string taal) => taal switch
-        {
-            "nl" => Taal.NL,
-            "de" => Taal.DE,
-            "fr" => Taal.FR,
-            "en" => Taal.EN,
-            _ => throw new ArgumentOutOfRangeException(nameof(taal), taal, null)
-        };
+        private static Taal StringToTaal(string taal)
+            => taal.ToLower() switch
+            {
+                "nl" => Taal.NL,
+                "de" => Taal.DE,
+                "fr" => Taal.FR,
+                "en" => Taal.EN,
+                _ => throw new ArgumentOutOfRangeException(nameof(taal), taal, null)
+            };
 
         private static void SetMunicipalityName(Taal taal, MunicipalityLatestItem municipality, string? name)
         {

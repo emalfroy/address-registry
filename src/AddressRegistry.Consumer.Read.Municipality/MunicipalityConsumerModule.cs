@@ -10,20 +10,21 @@ namespace AddressRegistry.Consumer.Read.Municipality
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
 
-    public class ConsumerModule : Module
+    public class MunicipalityConsumerModule : Module
     {
-        public ConsumerModule(
+        public MunicipalityConsumerModule(
             IConfiguration configuration,
             IServiceCollection services,
-            ILoggerFactory loggerFactory)
+            ILoggerFactory loggerFactory,
+            ServiceLifetime serviceLifetime = ServiceLifetime.Scoped)
         {
-            var logger = loggerFactory.CreateLogger<ConsumerModule>();
+            var logger = loggerFactory.CreateLogger<MunicipalityConsumerModule>();
             var connectionString = configuration.GetConnectionString("Consumer");
 
             var hasConnectionString = !string.IsNullOrWhiteSpace(connectionString);
             if (hasConnectionString)
             {
-                RunOnSqlServer(configuration, services, loggerFactory, connectionString);
+                RunOnSqlServer(configuration, services, loggerFactory, connectionString, serviceLifetime);
             }
             else
             {
@@ -35,19 +36,24 @@ namespace AddressRegistry.Consumer.Read.Municipality
             IConfiguration configuration,
             IServiceCollection services,
             ILoggerFactory loggerFactory,
-            string backofficeProjectionsConnectionString)
+            string backofficeProjectionsConnectionString,
+            ServiceLifetime serviceLifetime)
         {
             services
-                .AddScoped(s => new TraceDbConnection<ConsumerContext>(
-                    new SqlConnection(backofficeProjectionsConnectionString),
-                    configuration["DataDog:ServiceName"]))
-                .AddDbContext<ConsumerContext>((provider, options) => options
-                    .UseLoggerFactory(loggerFactory)
-                    .UseSqlServer(provider.GetRequiredService<TraceDbConnection<ConsumerContext>>(), sqlServerOptions =>
+                .Add(new ServiceDescriptor(
+                    typeof(TraceDbConnection<MunicipalityConsumerContext>),
+                    _ => new TraceDbConnection<MunicipalityConsumerContext>(new SqlConnection(backofficeProjectionsConnectionString), configuration["DataDog:ServiceName"]),
+                    serviceLifetime));
+
+            services.AddDbContext<MunicipalityConsumerContext>((provider, options) => options
+                .UseLoggerFactory(loggerFactory)
+                .UseSqlServer(provider.GetRequiredService<TraceDbConnection<MunicipalityConsumerContext>>(),
+                    sqlServerOptions =>
                     {
                         sqlServerOptions.EnableRetryOnFailure();
-                        sqlServerOptions.MigrationsHistoryTable(MigrationTables.ConsumerReadMunicipality, Schema.ConsumerReadMunicipality);
-                    }));
+                        sqlServerOptions.MigrationsHistoryTable(MigrationTables.ConsumerReadMunicipality,
+                            Schema.ConsumerReadMunicipality);
+                    }), serviceLifetime);
         }
 
         private static void RunInMemoryDb(
@@ -56,11 +62,11 @@ namespace AddressRegistry.Consumer.Read.Municipality
             ILogger logger)
         {
             services
-                .AddDbContext<ConsumerContext>(options => options
+                .AddDbContext<MunicipalityConsumerContext>(options => options
                     .UseLoggerFactory(loggerFactory)
                     .UseInMemoryDatabase(Guid.NewGuid().ToString(), sqlServerOptions => { }));
 
-            logger.LogWarning("Running InMemory for {Context}!", nameof(ConsumerContext));
+            logger.LogWarning("Running InMemory for {Context}!", nameof(MunicipalityConsumerContext));
         }
     }
 }

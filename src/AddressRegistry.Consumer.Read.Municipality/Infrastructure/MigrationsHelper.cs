@@ -41,7 +41,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Infrastructure
 
         private static async Task RunInternal(string connectionString, ILoggerFactory loggerFactory, CancellationToken cancellationToken)
         {
-            var migratorOptions = new DbContextOptionsBuilder<ConsumerContext>()
+            var migratorOptions = new DbContextOptionsBuilder<MunicipalityConsumerContext>()
                 .UseSqlServer(
                     connectionString,
                     sqlServerOptions =>
@@ -52,7 +52,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Infrastructure
 
             migratorOptions = migratorOptions.UseLoggerFactory(loggerFactory);
 
-            await using var migrator = new ConsumerContext(migratorOptions.Options);
+            await using var migrator = new MunicipalityConsumerContext(migratorOptions.Options);
             await migrator.Database.MigrateAsync(cancellationToken);
         }
     }
