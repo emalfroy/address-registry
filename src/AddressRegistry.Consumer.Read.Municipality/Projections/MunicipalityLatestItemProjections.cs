@@ -110,8 +110,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
             {
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
-                    var taal = StringToTaal(message.Language);
-                    SetMunicipalityName(taal, municipality, message.Name);
+                    SetMunicipalityName(message.Language.ToTaal(), municipality, message.Name);
                     UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
@@ -120,8 +119,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
             {
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
-                    var taal = StringToTaal(message.Language);
-                    SetMunicipalityName(taal, municipality, null);
+                    SetMunicipalityName(message.Language.ToTaal(), municipality, null);
                     UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
@@ -130,8 +128,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
             {
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
-                    var taal = StringToTaal(message.Language);
-                    SetMunicipalityName(taal, municipality, message.Name);
+                    SetMunicipalityName(message.Language.ToTaal(), municipality, message.Name);
                     UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
@@ -140,8 +137,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
             {
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
-                    var taal = StringToTaal(message.Language);
-                    SetMunicipalityName(taal, municipality, null);
+                    SetMunicipalityName(message.Language.ToTaal(), municipality, null);
                     UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
@@ -169,10 +165,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
             {
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
-                    var newList = new List<string>();
-                    newList.AddRange(municipality.OfficialLanguages);
-                    newList.Add(message.Language);
-                    municipality.OfficialLanguages = newList;
+                    municipality.AddOfficialLanguage(message.Language);
                     UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
@@ -181,29 +174,11 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
             {
                 await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
                 {
-                    var language = municipality.OfficialLanguages.FirstOrDefault(x => x == message.Language);
-
-                    if (language != null)
-                    {
-                        var newList = new List<string>();
-                        newList.AddRange(municipality.OfficialLanguages);
-                        newList.Remove(message.Language);
-                        municipality.OfficialLanguages = newList;
-                        UpdateVersionTimestamp(message.Provenance, municipality);
-                    }
+                    municipality.RemoveOfficialLanguage(message.Language);
+                    UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
         }
-
-        private static Taal StringToTaal(string taal)
-            => taal.ToLower() switch
-            {
-                "nl" => Taal.NL,
-                "de" => Taal.DE,
-                "fr" => Taal.FR,
-                "en" => Taal.EN,
-                _ => throw new ArgumentOutOfRangeException(nameof(taal), taal, null)
-            };
 
         private static void SetMunicipalityName(Taal taal, MunicipalityLatestItem municipality, string? name)
         {

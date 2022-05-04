@@ -5,13 +5,10 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
     using AddressRegistry.Infrastructure;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
-    using Newtonsoft.Json;
     using NodaTime;
 
-    public class MunicipalityLatestItem
+    public class MunicipalityLatestItem : MunicipalityLanguagesBase
     {
-        public static string OfficialLanguagesBackingPropertyName = nameof(OfficialLanguagesAsString);
-
         public Guid MunicipalityId { get; set; }
         public MunicipalityStatus Status { get; set; }
         public string NisCode { get; set; }
@@ -25,23 +22,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
         public string? NameEnglishSearch { get; set; }
 
         public byte[]? ExtendedWkbGeometry { get; set; }
-
-
+        
         public DateTimeOffset VersionTimestampAsDateTimeOffset { get; private set; }
-
-        private string OfficialLanguagesAsString { get; set; }
-        public List<string> OfficialLanguages
-        {
-            get => DeserializeOfficialLanguages();
-            set => OfficialLanguagesAsString = JsonConvert.SerializeObject(value);
-        }
-
-        private List<string> DeserializeOfficialLanguages()
-        {
-            return string.IsNullOrEmpty(OfficialLanguagesAsString)
-                ? new List<string>()
-                : JsonConvert.DeserializeObject<List<string>>(OfficialLanguagesAsString) ?? new List<string>();
-        }
 
         public Instant VersionTimestamp
         {
@@ -63,13 +45,6 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
         }
     }
 
-    public enum MunicipalityStatus
-    {
-        Current = 0,
-        Retired = 1,
-        Proposed = 2,
-    }
-
     public class MunicipalityItemConfiguration : IEntityTypeConfiguration<MunicipalityLatestItem>
     {
         private const string TableName = "LatestItems";
@@ -86,7 +61,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
             builder.Ignore(x => x.VersionTimestamp);
 
             builder.Ignore(x => x.OfficialLanguages);
-            builder.Property(MunicipalityLatestItem.OfficialLanguagesBackingPropertyName)
+            builder.Property(MunicipalityLanguagesBase.OfficialLanguagesBackingPropertyName)
                 .HasColumnName("OfficialLanguages");
 
             builder.Property(x => x.NisCode);

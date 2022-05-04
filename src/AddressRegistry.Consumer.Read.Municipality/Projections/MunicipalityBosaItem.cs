@@ -1,15 +1,13 @@
-using System;
-using System.Collections.Generic;
-
 namespace AddressRegistry.Consumer.Read.Municipality.Projections
 {
+    using System;
+    using System.Collections.Generic;
     using AddressRegistry.Infrastructure;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
-    using Newtonsoft.Json;
     using NodaTime;
 
-    public class MunicipalityBosaItem
+    public class MunicipalityBosaItem : MunicipalityLanguagesBase
     {
         public Guid MunicipalityId { get; set; }
         public string? NisCode { get; set; }
@@ -22,21 +20,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
         public string? NameEnglish { get; set; }
         public string? NameEnglishSearch { get; set; }
         public bool IsFlemishRegion { get; set; }
-
-        private string OfficialLanguagesAsString { get; set; }
-        public List<string> OfficialLanguages
-        {
-            get => DeserializeOfficialLanguages();
-            set => OfficialLanguagesAsString = JsonConvert.SerializeObject(value);
-        }
-
-        private List<string> DeserializeOfficialLanguages()
-        {
-            return string.IsNullOrEmpty(OfficialLanguagesAsString)
-                ? new List<string>()
-                : JsonConvert.DeserializeObject<List<string>>(OfficialLanguagesAsString) ?? new List<string>();
-        }
-
+        
         public DateTimeOffset VersionTimestampAsDateTimeOffset { get; private set; }
 
         public Instant VersionTimestamp
@@ -76,7 +60,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
             builder.Ignore(x => x.VersionTimestamp);
 
             builder.Ignore(x => x.OfficialLanguages);
-            builder.Property(MunicipalityLatestItem.OfficialLanguagesBackingPropertyName)
+            builder.Property(MunicipalityLanguagesBase.OfficialLanguagesBackingPropertyName)
                 .HasColumnName("OfficialLanguages");
 
             builder.Property(x => x.NisCode);
