@@ -5,7 +5,6 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
     using System.Threading.Tasks;
     using AddressRegistry.Consumer.Read.Municipality;
     using AddressRegistry.Consumer.Read.Municipality.Projections;
-    using Api.Legacy.AddressMatch.Matching;
     using AutoFixture;
     using Be.Vlaanderen.Basisregisters.GrAr.Common;
     using Be.Vlaanderen.Basisregisters.GrAr.Contracts.Common;
@@ -20,14 +19,14 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
     using Xunit;
     using Xunit.Abstractions;
 
-    public class MunicipalityLatestItemProjectionsTests : KafkaProjectionTest<MunicipalityConsumerContext, MunicipalityLatestItemProjections>
+    public class MunicipalityBosaItemProjectionsTests : KafkaProjectionTest<MunicipalityConsumerContext, MunicipalityBosaItemProjections>
     {
         private readonly Fixture _fixture;
         private Guid _municipalityId;
         private MunicipalityWasRegistered _registered;
         private Provenance _provenance;
 
-        public MunicipalityLatestItemProjectionsTests(ITestOutputHelper testOutputHelper)
+        public MunicipalityBosaItemProjectionsTests(ITestOutputHelper testOutputHelper)
             : base(testOutputHelper)
         {
             _fixture = new Fixture();
@@ -52,168 +51,11 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
             Given(_registered);
             await Then(async ct =>
             {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
+                var expected = await ct.MunicipalityBosaItems.FindAsync(_municipalityId);
                 expected.Should().NotBeNull();
                 expected.MunicipalityId.Should().Be(_municipalityId);
                 expected.NisCode.Should().Be(_registered.NisCode);
                 expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(_registered.Provenance.Timestamp).Value);
-            });
-        }
-
-        [Fact]
-        public async Task MunicipalityBecameCurrent()
-        {
-            var becameCurrent = new MunicipalityBecameCurrent(
-                _municipalityId.ToString("D"),
-                _provenance);
-
-            Given(_registered, becameCurrent);
-            await Then(async ct =>
-            {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
-                expected.Should().NotBeNull();
-                expected.Status.Should().Be(MunicipalityStatus.Current);
-                expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(becameCurrent.Provenance.Timestamp).Value);
-            });
-        }
-
-        [Fact]
-        public async Task MunicipalityWasCorrectedToCurrent()
-        {
-            var municipalityWasCorrectedToCurrent = new MunicipalityWasCorrectedToCurrent(
-                _municipalityId.ToString("D"),
-                _provenance);
-
-            Given(_registered, municipalityWasCorrectedToCurrent);
-            await Then(async ct =>
-            {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
-                expected.Should().NotBeNull();
-                expected.Status.Should().Be(MunicipalityStatus.Current);
-                expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(municipalityWasCorrectedToCurrent.Provenance.Timestamp).Value);
-            });
-        }
-
-        [Fact]
-        public async Task MunicipalityWasCorrectedToRetired()
-        {
-            var municipalityWasCorrectedToRetired = new MunicipalityWasCorrectedToRetired(
-                _municipalityId.ToString("D"),
-                _fixture.Create<Instant>().ToString(),
-                _provenance);
-
-            Given(_registered, municipalityWasCorrectedToRetired);
-            await Then(async ct =>
-            {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
-                expected.Should().NotBeNull();
-                expected.Status.Should().Be(MunicipalityStatus.Retired);
-                expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(municipalityWasCorrectedToRetired.Provenance.Timestamp).Value);
-            });
-        }
-
-        [Fact]
-        public async Task MunicipalityWasRetired()
-        {
-            var municipalityWasRetired = new MunicipalityWasRetired(
-                _municipalityId.ToString("D"),
-                _fixture.Create<Instant>().ToString(),
-                _provenance);
-
-            Given(_registered, municipalityWasRetired);
-            await Then(async ct =>
-            {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
-                expected.Should().NotBeNull();
-                expected.Status.Should().Be(MunicipalityStatus.Retired);
-                expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(municipalityWasRetired.Provenance.Timestamp).Value);
-            });
-        }
-
-        [Fact]
-        public async Task MunicipalityWasDrawn()
-        {
-            var extendedWkbGeometry = _fixture.Create<ExtendedWkbGeometry>();
-            var municipalityWasDrawn = new MunicipalityWasDrawn(
-                _municipalityId.ToString("D"),
-                extendedWkbGeometry.ToString(),
-                _provenance);
-
-            Given(_registered, municipalityWasDrawn);
-            await Then(async ct =>
-            {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
-                expected.Should().NotBeNull();
-                expected.ExtendedWkbGeometry.Should().BeEquivalentTo((byte[]?)extendedWkbGeometry);
-                expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(municipalityWasDrawn.Provenance.Timestamp).Value);
-            });
-        }
-
-        [Fact]
-        public async Task MunicipalityGeometryWasCorrectedToCleared()
-        {
-            var municipalityWasDrawn = new MunicipalityWasDrawn(
-                _municipalityId.ToString("D"),
-                _fixture.Create<ExtendedWkbGeometry>().ToString(),
-                _provenance);
-
-            var municipalityGeometryWasCorrectedToCleared = new MunicipalityGeometryWasCorrectedToCleared(
-                _municipalityId.ToString("D"),
-                _provenance);
-
-            Given(_registered, municipalityWasDrawn, municipalityGeometryWasCorrectedToCleared);
-            await Then(async ct =>
-            {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
-                expected.Should().NotBeNull();
-                expected.ExtendedWkbGeometry.Should().BeEquivalentTo((byte[]?)null);
-                expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(municipalityGeometryWasCorrectedToCleared.Provenance.Timestamp).Value);
-            });
-        }
-
-        [Fact]
-        public async Task MunicipalityGeometryWasCleared()
-        {
-            var municipalityWasDrawn = new MunicipalityWasDrawn(
-                _municipalityId.ToString("D"),
-                _fixture.Create<ExtendedWkbGeometry>().ToString(),
-                _provenance);
-
-            var municipalityGeometryWasCleared = new MunicipalityGeometryWasCleared(
-                _municipalityId.ToString("D"),
-                _provenance);
-
-            Given(_registered, municipalityGeometryWasCleared);
-            await Then(async ct =>
-            {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
-                expected.Should().NotBeNull();
-                expected.ExtendedWkbGeometry.Should().BeEquivalentTo((byte[]?)null);
-                expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(municipalityGeometryWasCleared.Provenance.Timestamp).Value);
-            });
-        }
-
-        [Fact]
-        public async Task MunicipalityGeometryWasCorrected()
-        {
-            var municipalityWasDrawn = new MunicipalityWasDrawn(
-                _municipalityId.ToString("D"),
-                _fixture.Create<ExtendedWkbGeometry>().ToString(),
-                _provenance);
-
-            var extendedWkbGeometry = _fixture.Create<ExtendedWkbGeometry>();
-            var municipalityGeometryWasCorrected = new MunicipalityGeometryWasCorrected(
-                _municipalityId.ToString("D"),
-                extendedWkbGeometry.ToString(),
-                _provenance);
-
-            Given(_registered, municipalityWasDrawn, municipalityGeometryWasCorrected);
-            await Then(async ct =>
-            {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
-                expected.Should().NotBeNull();
-                expected.ExtendedWkbGeometry.Should().BeEquivalentTo((byte[]?)extendedWkbGeometry);
-                expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(municipalityWasDrawn.Provenance.Timestamp).Value);
             });
         }
 
@@ -229,7 +71,7 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
             Given(_registered, municipalityWasNamed);
             await Then(async ct =>
             {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
+                var expected = await ct.MunicipalityBosaItems.FindAsync(_municipalityId);
                 expected.Should().NotBeNull();
                 expected.NameDutch.Should().Be(municipalityWasNamed.Name);
                 expected.NameDutchSearch.Should().Be(municipalityWasNamed.Name.RemoveDiacritics());
@@ -255,7 +97,7 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
             Given(_registered, municipalityWasNamed, municipalityNameWasCorrected);
             await Then(async ct =>
             {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
+                var expected = await ct.MunicipalityBosaItems.FindAsync(_municipalityId);
                 expected.Should().NotBeNull();
                 expected.NameDutch.Should().Be(municipalityNameWasCorrected.Name);
                 expected.NameDutchSearch.Should().Be(municipalityNameWasCorrected.Name.RemoveDiacritics());
@@ -280,7 +122,7 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
             Given(_registered, municipalityWasNamed, municipalityNameWasCorrectedToCleared);
             await Then(async ct =>
             {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
+                var expected = await ct.MunicipalityBosaItems.FindAsync(_municipalityId);
                 expected.Should().NotBeNull();
                 expected.NameDutch.Should().Be(null);
                 expected.NameDutchSearch.Should().BeNull();
@@ -305,7 +147,7 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
             Given(_registered, municipalityWasNamed, municipalityNameWasCleared);
             await Then(async ct =>
             {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
+                var expected = await ct.MunicipalityBosaItems.FindAsync(_municipalityId);
                 expected.Should().NotBeNull();
                 expected.NameDutch.Should().Be(null);
                 expected.NameDutchSearch.Should().BeNull();
@@ -324,7 +166,7 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
             Given(_registered, niscodeWasDefined);
             await Then(async ct =>
             {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
+                var expected = await ct.MunicipalityBosaItems.FindAsync(_municipalityId);
                 expected.Should().NotBeNull();
                 expected.NisCode.Should().Be(niscodeWasDefined.NisCode);
                 expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(niscodeWasDefined.Provenance.Timestamp).Value);
@@ -347,7 +189,7 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
             Given(_registered, niscodeWasDefined, municipalityNisCodeWasCorrected);
             await Then(async ct =>
             {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
+                var expected = await ct.MunicipalityBosaItems.FindAsync(_municipalityId);
                 expected.Should().NotBeNull();
                 expected.NisCode.Should().Be(municipalityNisCodeWasCorrected.NisCode);
                 expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(municipalityNisCodeWasCorrected.Provenance.Timestamp).Value);
@@ -365,7 +207,7 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
             Given(_registered, officialLanguageWasAdded);
             await Then(async ct =>
             {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
+                var expected = await ct.MunicipalityBosaItems.FindAsync(_municipalityId);
                 expected.Should().NotBeNull();
                 expected.OfficialLanguages.FirstOrDefault().Should().Be(officialLanguageWasAdded.Language);
                 expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(officialLanguageWasAdded.Provenance.Timestamp).Value);
@@ -390,7 +232,7 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
             Given(_registered, officialLanguageWasAdded, officialLanguageWasRemoved);
             await Then(async ct =>
             {
-                var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
+                var expected = await ct.MunicipalityBosaItems.FindAsync(_municipalityId);
                 expected.Should().NotBeNull();
                 expected.OfficialLanguages.FirstOrDefault().Should().NotBe(officialLanguageWasRemoved.Language);
                 expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(officialLanguageWasRemoved.Provenance.Timestamp).Value);
@@ -406,7 +248,7 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
             return new MunicipalityConsumerContext(options);
         }
 
-        protected override MunicipalityLatestItemProjections CreateProjection()
-            => new MunicipalityLatestItemProjections();
+        protected override MunicipalityBosaItemProjections CreateProjection()
+            => new MunicipalityBosaItemProjections();
     }
 }
