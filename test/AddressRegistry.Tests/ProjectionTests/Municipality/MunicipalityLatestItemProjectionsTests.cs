@@ -3,10 +3,11 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
     using System;
     using System.Linq;
     using System.Threading.Tasks;
-    using AddressRegistry.Consumer;
     using AddressRegistry.Consumer.Read.Municipality;
     using AddressRegistry.Consumer.Read.Municipality.Projections;
+    using Api.Legacy.AddressMatch.Matching;
     using AutoFixture;
+    using Be.Vlaanderen.Basisregisters.GrAr.Common;
     using Be.Vlaanderen.Basisregisters.GrAr.Contracts.Common;
     using Be.Vlaanderen.Basisregisters.GrAr.Contracts.MunicipalityRegistry;
     using Be.Vlaanderen.Basisregisters.GrAr.Legacy;
@@ -15,18 +16,18 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
     using Microsoft.EntityFrameworkCore;
     using NodaTime;
     using NodaTime.Text;
+    using StreetName;
     using Xunit;
     using Xunit.Abstractions;
-    using StreetName;
 
-    public class MunicipalityProjectionsTests : KafkaProjectionTest<MunicipalityConsumerContext, MunicipalityProjections>
+    public class MunicipalityLatestItemProjectionsTests : KafkaProjectionTest<MunicipalityConsumerContext, MunicipalityLatestItemProjections>
     {
         private readonly Fixture _fixture;
         private Guid _municipalityId;
         private MunicipalityWasRegistered _registered;
         private Provenance _provenance;
 
-        public MunicipalityProjectionsTests(ITestOutputHelper testOutputHelper)
+        public MunicipalityLatestItemProjectionsTests(ITestOutputHelper testOutputHelper)
             : base(testOutputHelper)
         {
             _fixture = new Fixture();
@@ -231,6 +232,7 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
                 var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
                 expected.Should().NotBeNull();
                 expected.NameDutch.Should().Be(municipalityWasNamed.Name);
+                expected.NameDutchSearch.Should().Be(municipalityWasNamed.Name.RemoveDiacritics());
                 expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(municipalityWasNamed.Provenance.Timestamp).Value);
             });
         }
@@ -256,6 +258,7 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
                 var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
                 expected.Should().NotBeNull();
                 expected.NameDutch.Should().Be(municipalityNameWasCorrected.Name);
+                expected.NameDutchSearch.Should().Be(municipalityNameWasCorrected.Name.RemoveDiacritics());
                 expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(municipalityWasNamed.Provenance.Timestamp).Value);
             });
         }
@@ -280,6 +283,7 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
                 var expected = await ct.MunicipalityLatestItems.FindAsync(_municipalityId);
                 expected.Should().NotBeNull();
                 expected.NameDutch.Should().Be(null);
+                expected.NameDutchSearch.Should().BeNull();
                 expected.VersionTimestamp.Should().Be(InstantPattern.General.Parse(municipalityWasNamed.Provenance.Timestamp).Value);
             });
         }
@@ -377,7 +381,7 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
             return new MunicipalityConsumerContext(options);
         }
 
-        protected override MunicipalityProjections CreateProjection()
-            => new MunicipalityProjections();
+        protected override MunicipalityLatestItemProjections CreateProjection()
+            => new MunicipalityLatestItemProjections();
     }
 }

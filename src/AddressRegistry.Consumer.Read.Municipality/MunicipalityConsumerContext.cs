@@ -88,7 +88,7 @@ namespace AddressRegistry.Consumer.Read.Municipality
             return municipality;
         }
 
-        private static ProjectionItemNotFoundException<MunicipalityProjections> DatabaseItemNotFound(Guid municipalityId)
-            => new ProjectionItemNotFoundException<MunicipalityProjections>(municipalityId.ToString("D"));
+        private static ProjectionItemNotFoundException<MunicipalityLatestItemProjections> DatabaseItemNotFound(Guid municipalityId)
+            => new ProjectionItemNotFoundException<MunicipalityLatestItemProjections>(municipalityId.ToString("D"));
     }
 }

@@ -3,7 +3,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using Be.Vlaanderen.Basisregisters.GrAr.Contracts;
+    using Be.Vlaanderen.Basisregisters.GrAr.Common;
     using Be.Vlaanderen.Basisregisters.GrAr.Contracts.Common;
     using Be.Vlaanderen.Basisregisters.GrAr.Contracts.MunicipalityRegistry;
     using Be.Vlaanderen.Basisregisters.GrAr.Legacy;
@@ -11,7 +11,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
     using Be.Vlaanderen.Basisregisters.Utilities.HexByteConvertor;
     using NodaTime.Text;
 
-    public class MunicipalityProjections : ConnectedProjection<MunicipalityConsumerContext>
+    public class MunicipalityLatestItemProjections : ConnectedProjection<MunicipalityConsumerContext>
     {
         private void UpdateVersionTimestamp(Provenance provenance, MunicipalityLatestItem municipality)
         {
@@ -19,7 +19,7 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
             municipality.VersionTimestamp = timestamp;
         }
 
-        public MunicipalityProjections()
+        public MunicipalityLatestItemProjections()
         {
             When<MunicipalityWasRegistered>(async (context, message, ct) =>
             {
@@ -211,15 +211,19 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
             {
                 case Taal.NL:
                     municipality.NameDutch = name;
+                    municipality.NameDutchSearch = name.RemoveDiacritics();
                     break;
                 case Taal.DE:
                     municipality.NameGerman = name;
+                    municipality.NameGermanSearch = name.RemoveDiacritics();
                     break;
                 case Taal.FR:
                     municipality.NameFrench = name;
+                    municipality.NameFrenchSearch = name.RemoveDiacritics();
                     break;
                 case Taal.EN:
                     municipality.NameEnglish = name;
+                    municipality.NameEnglishSearch = name.RemoveDiacritics();
                     break;
             }
         }

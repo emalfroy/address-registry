@@ -1,6 +1,5 @@
 namespace AddressRegistry.Consumer.Read.Municipality
 {
-    using System;
     using System.Threading;
     using System.Threading.Tasks;
     using Autofac;
@@ -30,8 +29,7 @@ namespace AddressRegistry.Consumer.Read.Municipality
 
         public async Task Start(CancellationToken cancellationToken = default)
         {
-            //var projector = new ConnectedProjector<Func<ConsumerContext>>(Resolve.WhenEqualToHandlerMessageType(new MunicipalityProjections().Handlers));
-            var projector = new ConnectedProjector<MunicipalityConsumerContext>(Resolve.WhenEqualToHandlerMessageType(new MunicipalityProjections().Handlers));
+            var projector = new ConnectedProjector<MunicipalityConsumerContext>(Resolve.WhenEqualToHandlerMessageType(new MunicipalityLatestItemProjections().Handlers));
 
             var consumerGroupId = $"{nameof(AddressRegistry)}.{nameof(MunicipalityConsumer)}.{_municipalityConsumerOptions.Topic}{_municipalityConsumerOptions.ConsumerGroupSuffix}";
             var result = await KafkaConsumer.Consume(
@@ -40,7 +38,6 @@ namespace AddressRegistry.Consumer.Read.Municipality
                 _municipalityConsumerOptions.Topic,
                 async message =>
                 {
-                    //await projector.ProjectAsync(_container.Resolve<Func<ConsumerContext>>(), message, cancellationToken);
                     await projector.ProjectAsync(_container.Resolve<MunicipalityConsumerContext>(), message, cancellationToken);
                 },
                 offset: null,
