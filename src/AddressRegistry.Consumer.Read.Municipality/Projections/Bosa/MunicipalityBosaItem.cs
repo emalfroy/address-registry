@@ -1,4 +1,4 @@
-namespace AddressRegistry.Consumer.Read.Municipality.Projections
+namespace AddressRegistry.Consumer.Read.Municipality.Projections.Bosa
 {
     using System;
     using System.Collections.Generic;

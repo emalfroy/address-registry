@@ -7,7 +7,8 @@ namespace AddressRegistry.Consumer.Read.Municipality
     using Be.Vlaanderen.Basisregisters.ProjectionHandling.Connector;
     using Be.Vlaanderen.Basisregisters.ProjectionHandling.Runner;
     using Microsoft.EntityFrameworkCore;
-    using Projections;
+    using Projections.Bosa;
+    using Projections.Latest;
 
     public class MunicipalityConsumerContext : RunnerDbContext<MunicipalityConsumerContext>
     {

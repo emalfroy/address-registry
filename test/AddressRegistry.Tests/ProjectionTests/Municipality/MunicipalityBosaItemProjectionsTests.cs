@@ -4,7 +4,7 @@ namespace AddressRegistry.Tests.ProjectionTests.Municipality
     using System.Linq;
     using System.Threading.Tasks;
     using AddressRegistry.Consumer.Read.Municipality;
-    using AddressRegistry.Consumer.Read.Municipality.Projections;
+    using AddressRegistry.Consumer.Read.Municipality.Projections.Bosa;
     using AutoFixture;
     using Be.Vlaanderen.Basisregisters.GrAr.Common;
     using Be.Vlaanderen.Basisregisters.GrAr.Contracts.Common;

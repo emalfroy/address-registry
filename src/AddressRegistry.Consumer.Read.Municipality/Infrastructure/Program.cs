@@ -13,6 +13,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Infrastructure
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
     using Modules;
+    using Projections.Bosa;
+    using Projections.Latest;
     using Serilog;
 
     public class Program
@@ -66,13 +68,15 @@ namespace AddressRegistry.Consumer.Read.Municipality.Infrastructure
 
                 var actualContainer = container.GetRequiredService<ILifetimeScope>();
 
-                var consumer = new MunicipalityConsumer(actualContainer, loggerFactory, kafkaOptions, consumerOptions);
-                var consumerTask = consumer.Start(cancellationToken);
+                var municipalityLatestItemConsumer = new MunicipalityLatestItemConsumer(actualContainer, loggerFactory, kafkaOptions, consumerOptions);
+                var municipalityBosaItemConsumer = new MunicipalityBosaItemConsumer(actualContainer, loggerFactory, kafkaOptions, consumerOptions);
 
                 //var projectionsManager = actualContainer.Resolve<IConnectedProjectionsManager>();
                 //var projectionsTask = projectionsManager.Start(cancellationToken);
 
-                await Task.WhenAll(/*projectionsTask,*/ consumerTask);
+                await Task.WhenAll(
+                    municipalityLatestItemConsumer.Start(cancellationToken),
+                    municipalityBosaItemConsumer.Start(cancellationToken));
             }
             catch (Exception e)
             {
