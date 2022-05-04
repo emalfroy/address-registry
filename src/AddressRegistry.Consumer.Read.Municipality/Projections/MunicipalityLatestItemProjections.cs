@@ -1,8 +1,6 @@
 namespace AddressRegistry.Consumer.Read.Municipality.Projections
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
     using Be.Vlaanderen.Basisregisters.GrAr.Common;
     using Be.Vlaanderen.Basisregisters.GrAr.Contracts.Common;
     using Be.Vlaanderen.Basisregisters.GrAr.Contracts.MunicipalityRegistry;
@@ -13,12 +11,6 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
     public class MunicipalityLatestItemProjections : ConnectedProjection<MunicipalityConsumerContext>
     {
-        private void UpdateVersionTimestamp(Provenance provenance, MunicipalityLatestItem municipality)
-        {
-            var timestamp = InstantPattern.General.Parse(provenance.Timestamp).Value;
-            municipality.VersionTimestamp = timestamp;
-        }
-
         public MunicipalityLatestItemProjections()
         {
             When<MunicipalityWasRegistered>(async (context, message, ct) =>
@@ -36,7 +28,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
             When<MunicipalityBecameCurrent>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.Status = MunicipalityStatus.Current;
                     UpdateVersionTimestamp(message.Provenance, municipality);
@@ -45,7 +38,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
             When<MunicipalityWasCorrectedToCurrent>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.Status = MunicipalityStatus.Current;
                     UpdateVersionTimestamp(message.Provenance, municipality);
@@ -54,7 +48,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
             When<MunicipalityWasCorrectedToRetired>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.Status = MunicipalityStatus.Retired;
                     UpdateVersionTimestamp(message.Provenance, municipality);
@@ -63,7 +58,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
             When<MunicipalityWasRetired>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.Status = MunicipalityStatus.Retired;
                     UpdateVersionTimestamp(message.Provenance, municipality);
@@ -72,7 +68,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
             When<MunicipalityWasDrawn>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.ExtendedWkbGeometry = message.ExtendedWkbGeometry.ToByteArray();
                     UpdateVersionTimestamp(message.Provenance, municipality);
@@ -81,7 +78,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
             When<MunicipalityGeometryWasCorrectedToCleared>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.ExtendedWkbGeometry = null;
                     UpdateVersionTimestamp(message.Provenance, municipality);
@@ -90,7 +88,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
             When<MunicipalityGeometryWasCleared>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.ExtendedWkbGeometry = null;
                     UpdateVersionTimestamp(message.Provenance, municipality);
@@ -99,7 +98,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
             When<MunicipalityGeometryWasCorrected>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.ExtendedWkbGeometry = message.ExtendedWkbGeometry.ToByteArray();
                     UpdateVersionTimestamp(message.Provenance, municipality);
@@ -108,7 +108,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
             When<MunicipalityWasNamed>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     SetMunicipalityName(message.Language.ToTaal(), municipality, message.Name);
                     UpdateVersionTimestamp(message.Provenance, municipality);
@@ -117,7 +118,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
             When<MunicipalityNameWasCleared>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     SetMunicipalityName(message.Language.ToTaal(), municipality, null);
                     UpdateVersionTimestamp(message.Provenance, municipality);
@@ -126,7 +128,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
             When<MunicipalityNameWasCorrected>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     SetMunicipalityName(message.Language.ToTaal(), municipality, message.Name);
                     UpdateVersionTimestamp(message.Provenance, municipality);
@@ -135,17 +138,18 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
             When<MunicipalityNameWasCorrectedToCleared>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     SetMunicipalityName(message.Language.ToTaal(), municipality, null);
                     UpdateVersionTimestamp(message.Provenance, municipality);
                 }, ct);
             });
 
-
             When<MunicipalityNisCodeWasDefined>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.NisCode = message.NisCode;
                     UpdateVersionTimestamp(message.Provenance, municipality);
@@ -154,7 +158,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
             When<MunicipalityNisCodeWasCorrected>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.NisCode = message.NisCode;
                     UpdateVersionTimestamp(message.Provenance, municipality);
@@ -163,7 +168,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
             When<MunicipalityOfficialLanguageWasAdded>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.AddOfficialLanguage(message.Language);
                     UpdateVersionTimestamp(message.Provenance, municipality);
@@ -172,7 +178,8 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
 
             When<MunicipalityOfficialLanguageWasRemoved>(async (contextFactory, message, ct) =>
             {
-                await contextFactory.FindAndUpdate(new Guid(message.MunicipalityId), municipality =>
+                await contextFactory.FindAndUpdate<MunicipalityLatestItem, MunicipalityLatestItemProjections>(
+                    new Guid(message.MunicipalityId), municipality =>
                 {
                     municipality.RemoveOfficialLanguage(message.Language);
                     UpdateVersionTimestamp(message.Provenance, municipality);
@@ -200,7 +207,16 @@ namespace AddressRegistry.Consumer.Read.Municipality.Projections
                     municipality.NameEnglish = name;
                     municipality.NameEnglishSearch = name.RemoveDiacritics();
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(taal), taal, null);
             }
         }
+
+        private static void UpdateVersionTimestamp(Provenance provenance, MunicipalityLatestItem municipality)
+        {
+            var timestamp = InstantPattern.General.Parse(provenance.Timestamp).Value;
+            municipality.VersionTimestamp = timestamp;
+        }
+
     }
 }

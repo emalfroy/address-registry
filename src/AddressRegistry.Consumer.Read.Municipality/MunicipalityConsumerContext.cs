@@ -12,6 +12,7 @@ namespace AddressRegistry.Consumer.Read.Municipality
     public class MunicipalityConsumerContext : RunnerDbContext<MunicipalityConsumerContext>
     {
         public DbSet<MunicipalityLatestItem> MunicipalityLatestItems { get; set; }
+        public DbSet<MunicipalityBosaItem> MunicipalityBosaItems { get; set; }
 
         // This needs to be here to please EF
         public MunicipalityConsumerContext()
@@ -46,40 +47,16 @@ namespace AddressRegistry.Consumer.Read.Municipality
 
     public static class AddressDetailExtensions
     {
-        public static async Task<MunicipalityLatestItem> FindAndUpdate(
-            this Func<MunicipalityConsumerContext> contextFactory,
-            Guid municipalityId,
-            Action<MunicipalityLatestItem> updateFunc,
-            CancellationToken ct)
-        {
-            await using var context = contextFactory();
-
-            var municipality = await context
-                .MunicipalityLatestItems
-                .FindAsync(municipalityId, cancellationToken: ct);
-
-            if (municipality == null)
-                throw DatabaseItemNotFound(municipalityId);
-
-            updateFunc(municipality);
-
-            await context.SaveChangesAsync(ct);
-
-            return municipality;
-        }
-
-        public static async Task<MunicipalityLatestItem> FindAndUpdate(
+        public static async Task<TEntity> FindAndUpdate<TEntity, TProjections>(
             this MunicipalityConsumerContext context,
             Guid municipalityId,
-            Action<MunicipalityLatestItem> updateFunc,
-            CancellationToken ct)
+            Action<TEntity> updateFunc,
+            CancellationToken ct) where TEntity : class
         {
-            var municipality = await context
-                .MunicipalityLatestItems
-                .FindAsync(municipalityId, cancellationToken: ct);
+            var municipality = await context.FindAsync<TEntity>(new object[] { municipalityId }, cancellationToken: ct);
 
             if (municipality == null)
-                throw DatabaseItemNotFound(municipalityId);
+                throw DatabaseItemNotFound<TProjections>(municipalityId);
 
             updateFunc(municipality);
 
@@ -88,7 +65,7 @@ namespace AddressRegistry.Consumer.Read.Municipality
             return municipality;
         }
 
-        private static ProjectionItemNotFoundException<MunicipalityLatestItemProjections> DatabaseItemNotFound(Guid municipalityId)
-            => new ProjectionItemNotFoundException<MunicipalityLatestItemProjections>(municipalityId.ToString("D"));
+        private static ProjectionItemNotFoundException<TProjections> DatabaseItemNotFound<TProjections>(Guid municipalityId)
+            => new(municipalityId.ToString("D"));
     }
 }
