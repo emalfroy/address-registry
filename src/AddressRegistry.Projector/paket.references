@@ -1,7 +1,7 @@
 Be.Vlaanderen.Basisregisters.Api
 Be.Vlaanderen.Basisregisters.EventHandling.Autofac
 Be.Vlaanderen.Basisregisters.DataDog.Tracing.Autofac
-Be.Vlaanderen.Basisregisters.Projector
+//Be.Vlaanderen.Basisregisters.Projector
 
 AspNetCore.HealthChecks.SqlServer
 Dapper

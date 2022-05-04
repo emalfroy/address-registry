@@ -56,7 +56,7 @@ namespace AddressRegistry.Projector.Infrastructure.Modules
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterModule(new DataDogModule(_configuration));
-            RegisterProjectionSetup(builder);
+            RegisterStreamStoreProjectionsetup(builder);
 
             builder
                 .RegisterType<ProblemDetailsHelper>()
@@ -65,7 +65,7 @@ namespace AddressRegistry.Projector.Infrastructure.Modules
             builder.Populate(_services);
         }
 
-        private void RegisterProjectionSetup(ContainerBuilder builder)
+        private void RegisterStreamStoreProjectionsetup(ContainerBuilder builder)
         {
             builder.RegisterModule(
                 new EventHandlingModule(
@@ -110,15 +110,15 @@ namespace AddressRegistry.Projector.Infrastructure.Modules
                 .RegisterProjectionMigrator<ExtractContextMigrationFactory>(
                     _configuration,
                     _loggerFactory)
-                .RegisterProjections<AddressExtractProjection, ExtractContext>(
+                .RegisterStreamStoreProjections<AddressExtractProjection, ExtractContext>(
                     context => new AddressExtractProjection(context.Resolve<IOptions<ExtractConfig>>(), DbaseCodePage.Western_European_ANSI.ToEncoding(), new WKBReader()),
-                    ConnectedProjectionSettings.Default)
-                .RegisterProjections<AddressCrabHouseNumberIdExtractProjection, ExtractContext>(
+                    StreamStoreConnectedProjectionSettings.Default)
+                .RegisterStreamStoreProjections<AddressCrabHouseNumberIdExtractProjection, ExtractContext>(
                     context => new AddressCrabHouseNumberIdExtractProjection(DbaseCodePage.Western_European_ANSI.ToEncoding()),
-                    ConnectedProjectionSettings.Default)
-                .RegisterProjections<AddressCrabSubaddressIdExtractProjection, ExtractContext>(
+                    StreamStoreConnectedProjectionSettings.Default)
+                .RegisterStreamStoreProjections<AddressCrabSubaddressIdExtractProjection, ExtractContext>(
                     context => new AddressCrabSubaddressIdExtractProjection(DbaseCodePage.Western_European_ANSI.ToEncoding()),
-                    ConnectedProjectionSettings.Default);
+                    StreamStoreConnectedProjectionSettings.Default);
         }
 
         private void RegisterExtractProjectionsV2(ContainerBuilder builder)
@@ -133,15 +133,15 @@ namespace AddressRegistry.Projector.Infrastructure.Modules
                 .RegisterProjectionMigrator<ExtractContextMigrationFactory>(
                     _configuration,
                     _loggerFactory)
-                .RegisterProjections<AddressExtractProjectionsV2, ExtractContext>(
+                .RegisterStreamStoreProjections<AddressExtractProjectionsV2, ExtractContext>(
                     context => new AddressExtractProjectionsV2(context.Resolve<IOptions<ExtractConfig>>(), DbaseCodePage.Western_European_ANSI.ToEncoding(), new WKBReader()),
-                    ConnectedProjectionSettings.Default)
-                .RegisterProjections<AddressCrabHouseNumberIdExtractProjection, ExtractContext>(
+                    StreamStoreConnectedProjectionSettings.Default)
+                .RegisterStreamStoreProjections<AddressCrabHouseNumberIdExtractProjection, ExtractContext>(
                     context => new AddressCrabHouseNumberIdExtractProjection(DbaseCodePage.Western_European_ANSI.ToEncoding()),
-                    ConnectedProjectionSettings.Default)
-                .RegisterProjections<AddressCrabSubaddressIdExtractProjection, ExtractContext>(
+                    StreamStoreConnectedProjectionSettings.Default)
+                .RegisterStreamStoreProjections<AddressCrabSubaddressIdExtractProjection, ExtractContext>(
                     context => new AddressCrabSubaddressIdExtractProjection(DbaseCodePage.Western_European_ANSI.ToEncoding()),
-                    ConnectedProjectionSettings.Default);
+                    StreamStoreConnectedProjectionSettings.Default);
         }
 
         private void RegisterLastChangedProjections(ContainerBuilder builder)
@@ -160,7 +160,7 @@ namespace AddressRegistry.Projector.Infrastructure.Modules
                 .RegisterProjectionMigrator<DataMigrationContextMigrationFactory>(
                     _configuration,
                     _loggerFactory)
-                .RegisterProjections<LastChangedListProjections, LastChangedListContext>(ConnectedProjectionSettings.Default);
+                .RegisterStreamStoreProjections<LastChangedListProjections, LastChangedListContext>(StreamStoreConnectedProjectionSettings.Default);
         }
 
         private void RegisterLegacyProjections(ContainerBuilder builder)
@@ -175,14 +175,14 @@ namespace AddressRegistry.Projector.Infrastructure.Modules
                 .RegisterProjectionMigrator<LegacyContextMigrationFactory>(
                     _configuration,
                     _loggerFactory)
-                .RegisterProjections<AddressDetailProjections, LegacyContext>(
+                .RegisterStreamStoreProjections<AddressDetailProjections, LegacyContext>(
                     () => new AddressDetailProjections(),
-                    ConnectedProjectionSettings.Default)
-                .RegisterProjections<AddressListProjections, LegacyContext>(ConnectedProjectionSettings.Default)
-                .RegisterProjections<AddressSyndicationProjections, LegacyContext>(
+                    StreamStoreConnectedProjectionSettings.Default)
+                .RegisterStreamStoreProjections<AddressListProjections, LegacyContext>(StreamStoreConnectedProjectionSettings.Default)
+                .RegisterStreamStoreProjections<AddressSyndicationProjections, LegacyContext>(
                     () => new AddressSyndicationProjections(),
-                    ConnectedProjectionSettings.Default)
-                .RegisterProjections<CrabIdToPersistentLocalIdProjections, LegacyContext>(ConnectedProjectionSettings.Default);
+                    StreamStoreConnectedProjectionSettings.Default)
+                .RegisterStreamStoreProjections<CrabIdToPersistentLocalIdProjections, LegacyContext>(StreamStoreConnectedProjectionSettings.Default);
         }
 
         private void RegisterLegacyProjectionsV2(ContainerBuilder builder)
@@ -197,14 +197,14 @@ namespace AddressRegistry.Projector.Infrastructure.Modules
                 .RegisterProjectionMigrator<LegacyContextMigrationFactory>(
                     _configuration,
                     _loggerFactory)
-                .RegisterProjections<AddressDetailProjectionsV2, LegacyContext>(
+                .RegisterStreamStoreProjections<AddressDetailProjectionsV2, LegacyContext>(
                     () => new AddressDetailProjectionsV2(),
-                    ConnectedProjectionSettings.Default)
-                .RegisterProjections<AddressListProjectionsV2, LegacyContext>(ConnectedProjectionSettings.Default)
-                .RegisterProjections<AddressSyndicationProjections, LegacyContext>(
+                    StreamStoreConnectedProjectionSettings.Default)
+                .RegisterStreamStoreProjections<AddressListProjectionsV2, LegacyContext>(StreamStoreConnectedProjectionSettings.Default)
+                .RegisterStreamStoreProjections<AddressSyndicationProjections, LegacyContext>(
                     () => new AddressSyndicationProjections(),
-                    ConnectedProjectionSettings.Default)
-                .RegisterProjections<CrabIdToPersistentLocalIdProjections, LegacyContext>(ConnectedProjectionSettings.Default);
+                    StreamStoreConnectedProjectionSettings.Default)
+                .RegisterStreamStoreProjections<CrabIdToPersistentLocalIdProjections, LegacyContext>(StreamStoreConnectedProjectionSettings.Default);
         }
 
         private void RegisterWfsProjections(ContainerBuilder builder)
@@ -216,16 +216,16 @@ namespace AddressRegistry.Projector.Infrastructure.Modules
                         _services,
                         _loggerFactory));
 
-            var wfsProjectionSettings = ConnectedProjectionSettings
+            var wfsProjectionSettings = StreamStoreConnectedProjectionSettings
                 .Configure(settings =>
-                    settings.ConfigureLinearBackoff<SqlException>(_configuration, "Wfs"));
+                    settings.ConfigureLinearBackOff<SqlException>(_configuration, "Wfs"));
 
             builder
                 .RegisterProjectionMigrator<WfsContextMigrationFactory>(
                     _configuration,
                     _loggerFactory)
 
-            .RegisterProjections<AddressRegistry.Projections.Wfs.AddressDetail.AddressDetailProjections, WfsContext>(() =>
+            .RegisterStreamStoreProjections<AddressRegistry.Projections.Wfs.AddressDetail.AddressDetailProjections, WfsContext>(() =>
                     new AddressRegistry.Projections.Wfs.AddressDetail.AddressDetailProjections(WKBReaderFactory.CreateForLegacy()),
                 wfsProjectionSettings);
         }
@@ -239,16 +239,16 @@ namespace AddressRegistry.Projector.Infrastructure.Modules
                         _services,
                         _loggerFactory));
 
-            var wfsProjectionSettings = ConnectedProjectionSettings
+            var wfsProjectionSettings = StreamStoreConnectedProjectionSettings
                 .Configure(settings =>
-                    settings.ConfigureLinearBackoff<SqlException>(_configuration, "Wfs"));
+                    settings.ConfigureLinearBackOff<SqlException>(_configuration, "Wfs"));
 
             builder
                 .RegisterProjectionMigrator<WfsContextMigrationFactory>(
                     _configuration,
                     _loggerFactory)
 
-                .RegisterProjections<AddressRegistry.Projections.Wfs.AddressWfs.AddressWfsProjections, WfsContext>(() =>
+                .RegisterStreamStoreProjections<AddressRegistry.Projections.Wfs.AddressWfs.AddressWfsProjections, WfsContext>(() =>
                         new AddressRegistry.Projections.Wfs.AddressWfs.AddressWfsProjections(WKBReaderFactory.CreateForLegacy()),
                     wfsProjectionSettings);
         }
@@ -262,16 +262,16 @@ namespace AddressRegistry.Projector.Infrastructure.Modules
                         _services,
                         _loggerFactory));
 
-            var wfsProjectionSettings = ConnectedProjectionSettings
+            var wfsProjectionSettings = StreamStoreConnectedProjectionSettings
                 .Configure(settings =>
-                    settings.ConfigureLinearBackoff<SqlException>(_configuration, "Wms"));
+                    settings.ConfigureLinearBackOff<SqlException>(_configuration, "Wms"));
 
             builder
                 .RegisterProjectionMigrator<WmsContextMigrationFactory>(
                     _configuration,
                     _loggerFactory)
 
-            .RegisterProjections<AddressRegistry.Projections.Wms.AddressDetail.AddressDetailProjections, WmsContext>(() =>
+            .RegisterStreamStoreProjections<AddressRegistry.Projections.Wms.AddressDetail.AddressDetailProjections, WmsContext>(() =>
                     new AddressRegistry.Projections.Wms.AddressDetail.AddressDetailProjections(WKBReaderFactory.CreateForLegacy()),
                 wfsProjectionSettings);
         }

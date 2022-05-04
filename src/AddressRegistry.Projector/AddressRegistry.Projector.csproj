@@ -31,6 +31,8 @@
     <ProjectReference Include="..\AddressRegistry.Projections.Legacy\AddressRegistry.Projections.Legacy.csproj" />
     <ProjectReference Include="..\AddressRegistry.Projections.Wfs\AddressRegistry.Projections.Wfs.csproj" />
     <ProjectReference Include="..\AddressRegistry.Projections.Wms\AddressRegistry.Projections.Wms.csproj" />
+    <ProjectReference Include="..\..\..\projector\src\Be.Vlaanderen.Basisregisters.Projector\Be.Vlaanderen.Basisregisters.Projector.csproj" />
+
   </ItemGroup>
 
   <ItemGroup>
