@@ -1,3 +1,4 @@
+Be.Vlaanderen.Basisregisters.Api
 Be.Vlaanderen.Basisregisters.Aws.DistributedMutex
 Be.Vlaanderen.Basisregisters.DataDog.Tracing.Autofac
 Be.Vlaanderen.Basisregisters.DataDog.Tracing.Sql
@@ -10,7 +11,9 @@ Be.Vlaanderen.Basisregisters.MessageHandling.Kafka.Simple
 Be.Vlaanderen.Basisregisters.ProjectionHandling.Connector 
 Be.Vlaanderen.Basisregisters.ProjectionHandling.Runner
 Be.Vlaanderen.Basisregisters.ProjectionHandling.SqlStreamStore.Autofac
-//Be.Vlaanderen.Basisregisters.Projector
+Be.Vlaanderen.Basisregisters.Projector
+
+AspNetCore.HealthChecks.SqlServer
 
 Serilog
 Serilog.Settings.Configuration
