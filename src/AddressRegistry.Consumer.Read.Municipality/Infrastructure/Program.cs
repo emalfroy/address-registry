@@ -6,13 +6,17 @@ namespace AddressRegistry.Consumer.Read.Municipality.Infrastructure
     using System.Threading.Tasks;
     using Autofac;
     using Autofac.Extensions.DependencyInjection;
+    using Be.Vlaanderen.Basisregisters.Api;
+    using Be.Vlaanderen.Basisregisters.Aws.DistributedMutex;
     using Be.Vlaanderen.Basisregisters.EventHandling;
     using Be.Vlaanderen.Basisregisters.MessageHandling.Kafka.Simple;
-    using Be.Vlaanderen.Basisregisters.Projector.Modules;
+    using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
     using Modules;
+    using Projections.Bosa;
+    using Projections.Latest;
     using Serilog;
 
     public class Program
@@ -23,88 +27,118 @@ namespace AddressRegistry.Consumer.Read.Municipality.Infrastructure
         protected Program()
         { }
 
-        public static async Task Main(string[] args)
-        {
-            var cancellationToken = CancellationTokenSource.Token;
-
-            cancellationToken.Register(() => Closing.Set());
-            Console.CancelKeyPress += (_, _) => CancellationTokenSource.Cancel();
-
-            AppDomain.CurrentDomain.FirstChanceException += (_, eventArgs) =>
-                Log.Debug(
-                    eventArgs.Exception,
-                    "FirstChanceException event raised in {AppDomain}.",
-                    AppDomain.CurrentDomain.FriendlyName);
-
-            AppDomain.CurrentDomain.UnhandledException += (_, eventArgs) =>
-                Log.Fatal((Exception)eventArgs.ExceptionObject, "Encountered a fatal exception, exiting program.");
-
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                .AddJsonFile($"appsettings.{Environment.MachineName.ToLowerInvariant()}.json", optional: true, reloadOnChange: false)
-                .AddEnvironmentVariables()
-                .AddCommandLine(args)
-                .Build();
-
-            var container = ConfigureServices(configuration);
-
-            Log.Information("Starting AddressRegistry.Consumer.Read.Municipality");
-
-            try
+        public static void Main(string[] args)
+            => Run(new ProgramOptions
             {
-                var loggerFactory = container.GetRequiredService<ILoggerFactory>();
+                Hosting =
+                {
+                    HttpPort = 5006
+                },
+                Logging =
+                {
+                    WriteTextToConsole = false,
+                    WriteJsonToConsole = false
+                },
+                Runtime =
+                {
+                    CommandLineArgs = args
+                },
+                MiddlewareHooks =
+                {
+                    ConfigureDistributedLock =
+                        configuration => DistributedLockOptions.LoadFromConfiguration(configuration)
+                }
+            });
 
-                await MigrationsHelper.RunAsync(configuration.GetConnectionString("ConsumerAdmin"), loggerFactory, cancellationToken);
+        private static void Run(ProgramOptions options)
+            => new WebHostBuilder()
+                .UseDefaultForApi<Startup>(options)
+                .RunWithLock<Program>();
 
-                var bootstrapServers = configuration["Kafka:BootstrapServers"];
-                var kafkaOptions = new KafkaOptions(bootstrapServers, configuration["Kafka:SaslUserName"], configuration["Kafka:SaslPassword"], EventsJsonSerializerSettingsProvider.CreateSerializerSettings());
+        //public static async Task Main(string[] args)
+        //{
+        //    var cancellationToken = CancellationTokenSource.Token;
 
-                var topic = $"{configuration["Topic"]}" ?? throw new ArgumentException("Configuration has no Municipality Topic.");
-                var consumerGroupSuffix = configuration["ConsumerGroupSuffix"];
-                var consumerOptions = new MunicipalityConsumerOptions(topic, consumerGroupSuffix);
+        //    cancellationToken.Register(() => Closing.Set());
+        //    Console.CancelKeyPress += (_, _) => CancellationTokenSource.Cancel();
 
-                var actualContainer = container.GetRequiredService<ILifetimeScope>();
+        //    AppDomain.CurrentDomain.FirstChanceException += (_, eventArgs) =>
+        //        Log.Debug(
+        //            eventArgs.Exception,
+        //            "FirstChanceException event raised in {AppDomain}.",
+        //            AppDomain.CurrentDomain.FriendlyName);
 
-                var consumer = new MunicipalityConsumer(actualContainer, loggerFactory, kafkaOptions, consumerOptions);
-                var consumerTask = consumer.Start(cancellationToken);
+        //    AppDomain.CurrentDomain.UnhandledException += (_, eventArgs) =>
+        //        Log.Fatal((Exception)eventArgs.ExceptionObject, "Encountered a fatal exception, exiting program.");
 
-                //var projectionsManager = actualContainer.Resolve<IConnectedProjectionsManager>();
-                //var projectionsTask = projectionsManager.Start(cancellationToken);
+        //    var configuration = new ConfigurationBuilder()
+        //        .SetBasePath(Directory.GetCurrentDirectory())
+        //        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+        //        .AddJsonFile($"appsettings.{Environment.MachineName.ToLowerInvariant()}.json", optional: true, reloadOnChange: false)
+        //        .AddEnvironmentVariables()
+        //        .AddCommandLine(args)
+        //        .Build();
 
-                await Task.WhenAll(/*projectionsTask,*/ consumerTask);
-            }
-            catch (Exception e)
-            {
-                Log.Fatal(e, "Encountered a fatal exception, exiting program.");
-                Log.CloseAndFlush();
+        //    var container = ConfigureServices(configuration);
 
-                // Allow some time for flushing before shutdown.
-                await Task.Delay(1000, default);
-                throw;
-            }
+        //    Log.Information("Starting AddressRegistry.Consumer.Read.Municipality");
 
-            Log.Information("Stopping...");
-            Closing.Close();
-        }
+        //    try
+        //    {
+        //        var loggerFactory = container.GetRequiredService<ILoggerFactory>();
 
-        private static IServiceProvider ConfigureServices(IConfiguration configuration)
-        {
-            var services = new ServiceCollection();
-            var builder = new ContainerBuilder();
+        //        await MigrationsHelper.RunAsync(configuration.GetConnectionString("ConsumerAdmin"), loggerFactory, cancellationToken);
 
-            builder.RegisterModule(new LoggingModule(configuration, services));
+        //        var bootstrapServers = configuration["Kafka:BootstrapServers"];
+        //        var kafkaOptions = new KafkaOptions(bootstrapServers, configuration["Kafka:SaslUserName"], configuration["Kafka:SaslPassword"], EventsJsonSerializerSettingsProvider.CreateSerializerSettings());
 
-            var tempProvider = services.BuildServiceProvider();
-            var loggerFactory = tempProvider.GetRequiredService<ILoggerFactory>();
+        //        var topic = $"{configuration["Topic"]}" ?? throw new ArgumentException("Configuration has no Municipality Topic.");
+        //        var consumerGroupSuffix = configuration["ConsumerGroupSuffix"];
+        //        var consumerOptions = new MunicipalityConsumerOptions(topic, consumerGroupSuffix);
 
-            builder.RegisterModule(new ApiModule(configuration, services, loggerFactory));
-            builder.RegisterModule(new MunicipalityConsumerModule(configuration, services, loggerFactory, ServiceLifetime.Transient));
-            //builder.RegisterModule(new ProjectorModule(configuration));
+        //        var actualContainer = container.GetRequiredService<ILifetimeScope>();
 
-            builder.Populate(services);
+        //        var municipalityLatestItemConsumer = new MunicipalityLatestItemConsumer(actualContainer, loggerFactory, kafkaOptions, consumerOptions);
+        //        var municipalityBosaItemConsumer = new MunicipalityBosaItemConsumer(actualContainer, loggerFactory, kafkaOptions, consumerOptions);
 
-            return new AutofacServiceProvider(builder.Build());
-        }
+        //        //var projectionsManager = actualContainer.Resolve<IConnectedProjectionsManager>();
+        //        //var projectionsTask = projectionsManager.Start(cancellationToken);
+
+        //        await Task.WhenAll(
+        //            municipalityLatestItemConsumer.Start(cancellationToken),
+        //            municipalityBosaItemConsumer.Start(cancellationToken));
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Log.Fatal(e, "Encountered a fatal exception, exiting program.");
+        //        Log.CloseAndFlush();
+
+        //        // Allow some time for flushing before shutdown.
+        //        await Task.Delay(1000, default);
+        //        throw;
+        //    }
+
+        //    Log.Information("Stopping...");
+        //    Closing.Close();
+        //}
+
+        //private static IServiceProvider ConfigureServices(IConfiguration configuration)
+        //{
+        //    var services = new ServiceCollection();
+        //    var builder = new ContainerBuilder();
+
+        //    builder.RegisterModule(new LoggingModule(configuration, services));
+
+        //    var tempProvider = services.BuildServiceProvider();
+        //    var loggerFactory = tempProvider.GetRequiredService<ILoggerFactory>();
+
+        //    builder.RegisterModule(new ApiModule(configuration, services, loggerFactory));
+        //    builder.RegisterModule(new MunicipalityConsumerModule(configuration, services, loggerFactory, ServiceLifetime.Transient));
+        //    //builder.RegisterModule(new ProjectorModule(configuration));
+
+        //    builder.Populate(services);
+
+        //    return new AutofacServiceProvider(builder.Build());
+        //}
     }
 }

@@ -15,7 +15,7 @@ namespace AddressRegistry.Migrator.Address.Infrastructure
         private readonly ILogger<ProcessedIdsTable> _logger;
 
         private const string ProcessedIdsTableName = "ProcessedIds";
-        private const string Table = $"[{Schema.MigrateAddress}].[{ProcessedIdsTableName}]";
+        private static readonly string Table = $"[{Schema.MigrateAddress}].[{ProcessedIdsTableName}]";
 
         public ProcessedIdsTable(string connectionString, ILoggerFactory loggerFactory)
         {
@@ -36,7 +36,7 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='{ProcessedIdsTableName}' and
 CREATE TABLE {Table}(
 [Id] [int] NOT NULL,
 [IsPageCompleted] [bit] NOT NULL DEFAULT 0,
-CONSTRAINT [PK_ProcessedIds] PRIMARY KEY CLUSTERED 
+CONSTRAINT [PK_ProcessedIds] PRIMARY KEY CLUSTERED
 (
 	[Id] ASC
 ))");

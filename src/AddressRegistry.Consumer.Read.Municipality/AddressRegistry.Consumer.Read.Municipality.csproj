@@ -7,24 +7,33 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>bin\Debug\net6.0\AddressRegistry.Consumer.Read.Municipality.xml</DocumentationFile>
+    <NoWarn>1701;1702;1705;1591</NoWarn>
+    <DefineConstants>TRACE;DEBUG;NETCOREAPP;NET6_0</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>bin\Release\net6.0\AddressRegistry.Consumer.Read.Municipality.xml</DocumentationFile>
+    <NoWarn>1701;1702;1705;1591</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <Content Include="Dockerfile" CopyToOutputDirectory="Always" />
     <Content Include="appsettings.json" CopyToOutputDirectory="Always" />
     <Content Include="appsettings.*.json" CopyToOutputDirectory="Always" />
+    <None Remove="appsettings - Copy.json" />
+    <None Remove="appsettings.AIV-VM.json" />
     <Content Include="paket.template" CopyToOutputDirectory="Always" />
     <Content Include="init.sh" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\projector\src\Be.Vlaanderen.Basisregisters.Projector\Be.Vlaanderen.Basisregisters.Projector.csproj" />
     <ProjectReference Include="..\AddressRegistry.Infrastructure\AddressRegistry.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\..\SolutionInfo.cs" Link="Properties\SolutionInfo.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Migrations\" />
   </ItemGroup>
 
   <Import Project="..\..\.paket\Paket.Restore.targets" />

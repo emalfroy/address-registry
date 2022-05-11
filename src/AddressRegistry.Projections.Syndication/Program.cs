@@ -1,27 +1,26 @@
 namespace AddressRegistry.Projections.Syndication
 {
-    using Autofac;
-    using Autofac.Extensions.DependencyInjection;
-    using Autofac.Features.OwnedInstances;
-    using Be.Vlaanderen.Basisregisters.ProjectionHandling.Syndication;
-    using Microsoft.Extensions.Configuration;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Logging;
-    using Modules;
-    using Municipality;
-    using Serilog;
-    using StreetName;
     using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
     using AddressLink;
+    using Autofac;
+    using Autofac.Extensions.DependencyInjection;
     using Be.Vlaanderen.Basisregisters.Aws.DistributedMutex;
+    using Be.Vlaanderen.Basisregisters.ProjectionHandling.Syndication;
     using Be.Vlaanderen.Basisregisters.Shaperon;
     using BuildingUnit;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Logging;
+    using Modules;
+    using Municipality;
     using Parcel;
     using PostalInfo;
+    using Serilog;
+    using StreetName;
 
     public class Program
     {
@@ -65,11 +64,11 @@ namespace AddressRegistry.Projections.Syndication
                         {
                             await MigrationsHelper.RunAsync(
                                 configuration.GetConnectionString("SyndicationProjectionsAdmin"),
-                                container.GetService<ILoggerFactory>(),
+                                container.GetRequiredService<ILoggerFactory>(),
                                 ct);
 
                             await container
-                                .GetService<FeedProjector<SyndicationContext>>()
+                                .GetRequiredService<FeedProjector<SyndicationContext>>()
                                 .Register(BuildProjectionRunners(configuration, container))
                                 .Start(ct);
                         }

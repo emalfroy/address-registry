@@ -10,15 +10,6 @@ namespace AddressRegistry.Projections.Wfs.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<string>(
-                name: "VersionAsString",
-                schema: "wfs.address",
-                table: "AddressDetails",
-                type: "nvarchar(max)",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(450)",
-                oldNullable: true);
 
             migrationBuilder.CreateTable(
                 name: "AddressWfs",
@@ -64,15 +55,6 @@ namespace AddressRegistry.Projections.Wfs.Migrations
                 name: "AddressWfs",
                 schema: "wfs.address");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "VersionAsString",
-                schema: "wfs.address",
-                table: "AddressDetails",
-                type: "nvarchar(450)",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(max)",
-                oldNullable: true);
         }
     }
 }
