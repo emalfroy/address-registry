@@ -80,7 +80,8 @@ namespace AddressRegistry.Api.BackOffice.Address
 
                 var streetNamePersistentLocalId = new StreetNamePersistentLocalId(int.Parse(identifier.Value));
                 var postalCodeId = new PostalCode(postInfoIdentifier.Value);
-                var addressPersistentLocalId = new AddressPersistentLocalId(persistentLocalIdGenerator.GenerateNextPersistentLocalId());
+                var addressPersistentLocalId =
+                    new AddressPersistentLocalId(persistentLocalIdGenerator.GenerateNextPersistentLocalId());
 
                 var cmd = addressProposeRequest.ToCommand(
                     streetNamePersistentLocalId,
@@ -88,15 +89,19 @@ namespace AddressRegistry.Api.BackOffice.Address
                     addressPersistentLocalId,
                     fakeProvenanceData);
 
-                await IdempotentCommandHandlerDispatch(idempotencyContext, cmd.CreateCommandId(), cmd, cancellationToken);
+                await IdempotentCommandHandlerDispatch(idempotencyContext, cmd.CreateCommandId(), cmd,
+                    cancellationToken);
 
                 // Insert PersistentLocalId with MunicipalityId
                 await backOfficeContext
                     .AddressPersistentIdStreetNamePersistentIds
-                    .AddAsync(new AddressPersistentIdStreetNamePersistentId(addressPersistentLocalId, streetNamePersistentLocalId), cancellationToken);
+                    .AddAsync(
+                        new AddressPersistentIdStreetNamePersistentId(addressPersistentLocalId,
+                            streetNamePersistentLocalId), cancellationToken);
                 await backOfficeContext.SaveChangesAsync(cancellationToken);
 
-                var addressHash = await GetHash(streetNameRepository, streetNamePersistentLocalId, addressPersistentLocalId, cancellationToken);
+                var addressHash = await GetHash(streetNameRepository, streetNamePersistentLocalId,
+                    addressPersistentLocalId, cancellationToken);
                 return new CreatedWithLastObservedPositionAsETagResult(
                     new Uri(string.Format(options.Value.DetailUrl, addressPersistentLocalId)), addressHash);
             }
@@ -110,9 +115,13 @@ namespace AddressRegistry.Api.BackOffice.Address
                 {
                     // TODO: catch validation exceptions
 
-                   _ => new ValidationException(new List<ValidationFailure>
-                        {new ValidationFailure(string.Empty, exception.Message)})
+                    _ => new ValidationException(new List<ValidationFailure>
+                        { new ValidationFailure(string.Empty, exception.Message) })
                 };
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
         }
     }
