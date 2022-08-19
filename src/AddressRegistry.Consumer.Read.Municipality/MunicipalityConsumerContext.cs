@@ -1,6 +1,7 @@
 namespace AddressRegistry.Consumer.Read.Municipality
 {
     using System;
+    using System.Security.Cryptography.X509Certificates;
     using System.Threading;
     using System.Threading.Tasks;
     using AddressRegistry.Infrastructure;
@@ -8,8 +9,9 @@ namespace AddressRegistry.Consumer.Read.Municipality
     using Be.Vlaanderen.Basisregisters.ProjectionHandling.Runner;
     using Microsoft.EntityFrameworkCore;
     using Projections;
+    using StreetName;
 
-    public class MunicipalityConsumerContext : RunnerDbContext<MunicipalityConsumerContext>
+    public class MunicipalityConsumerContext : RunnerDbContext<MunicipalityConsumerContext>, IMunicipalities
     {
         public DbSet<MunicipalityLatestItem> MunicipalityLatestItems { get; set; }
 
@@ -23,6 +25,13 @@ namespace AddressRegistry.Consumer.Read.Municipality
         { }
 
         public override string ProjectionStateSchema => Schema.ConsumerReadMunicipality;
+
+        public Municipality? Get(MunicipalityId municipalityId)
+        {
+            var municipality = MunicipalityLatestItems.Find(municipalityId);
+
+            return municipality is not null ? new Municipality(municipality.ExtendedWkbGeometry) : null;
+        }
     }
 
     //Classed used when running dotnet ef migrations

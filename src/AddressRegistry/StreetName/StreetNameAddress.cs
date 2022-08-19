@@ -227,6 +227,93 @@ namespace AddressRegistry.StreetName
             }
         }
 
+        public void ChangePosition(
+            GeometryMethod geometryMethod,
+            GeometrySpecification? geometrySpecification,
+            ExtendedWkbGeometry? position,
+            IMunicipalities municipalities)
+        {
+            if (IsRemoved)
+            {
+                throw new AddressIsRemovedException(AddressPersistentLocalId);
+            }
+
+            var validStatuses = new[] { AddressStatus.Proposed, AddressStatus.Current };
+
+            if (!validStatuses.Contains(Status))
+            {
+                throw new AddressHasInvalidStatusException();
+            }
+
+            if (geometryMethod == GeometryMethod.Interpolated)
+            {
+                throw new AddressHasInvalidGeometryMethodException();
+            }
+
+            if (geometryMethod == GeometryMethod.AppointedByAdministrator && position is null)
+            {
+                throw new AddressHasMissingPositionException();
+            }
+
+            if (geometryMethod == GeometryMethod.AppointedByAdministrator && geometrySpecification is null)
+            {
+                throw new AddressHasMissingGeometrySpecificationException();
+            }
+
+            var finalGeometrySpecification = geometrySpecification is null && geometryMethod == GeometryMethod.DerivedFromObject
+                ? GeometrySpecification.Municipality
+                : geometrySpecification!.Value;
+
+            GuardGeometrySpecification(geometryMethod, finalGeometrySpecification);
+
+            if (!HasGeometryChanged(geometryMethod, position, finalGeometrySpecification))
+            {
+                return;
+            }
+
+            Apply(new AddressPositionWasChanged(
+                _streetNamePersistentLocalId,
+                AddressPersistentLocalId,
+                geometryMethod,
+                finalGeometrySpecification,
+                position));
+        }
+
+        private bool HasGeometryChanged(
+            GeometryMethod geometryMethod,
+            ExtendedWkbGeometry position,
+            GeometrySpecification finalGeometrySpecification)
+        {
+            var newGeometry = new AddressGeometry(geometryMethod, finalGeometrySpecification, position);
+            return Geometry is null || Geometry != newGeometry;
+        }
+
+        private void GuardGeometrySpecification(
+            GeometryMethod positionGeometryMethod,
+            GeometrySpecification geometrySpecification)
+        {
+            if (positionGeometryMethod == GeometryMethod.DerivedFromObject
+                && geometrySpecification != GeometrySpecification.Municipality)
+            {
+                throw new AddressHasInvalidGeometrySpecificationException();
+            }
+
+            var validSpecifications = new[]
+            {
+                GeometrySpecification.Entry,
+                GeometrySpecification.Parcel,
+                GeometrySpecification.Lot,
+                GeometrySpecification.Stand,
+                GeometrySpecification.Berth
+            };
+
+            if (positionGeometryMethod == GeometryMethod.AppointedByAdministrator
+                && !validSpecifications.Contains(geometrySpecification))
+            {
+                throw new AddressHasInvalidGeometrySpecificationException();
+            }
+        }
+
         /// <summary>
         /// Set the parent of the instance.
         /// </summary>
