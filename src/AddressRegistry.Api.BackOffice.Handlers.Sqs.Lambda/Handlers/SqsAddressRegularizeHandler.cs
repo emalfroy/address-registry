@@ -55,7 +55,7 @@ namespace AddressRegistry.Api.BackOffice.Handlers.Sqs.Lambda.Handlers
         {
             return exception switch
             {
-                StreetNameHasInvalidStatusException => new TicketError(
+                AddressHasInvalidStatusException => new TicketError(
                     ValidationErrorMessages.Address.AddressCannotBeRegularized,
                     ValidationErrors.Address.AddressCannotBeRegularized),
                 _ => null
