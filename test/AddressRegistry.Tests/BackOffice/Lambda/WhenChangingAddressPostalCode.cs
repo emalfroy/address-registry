@@ -56,12 +56,11 @@ namespace AddressRegistry.Tests.BackOffice.Lambda
                 new HouseNumber("11"),
                 null);
 
-            ETagResponse? etag = null;
-
+            var eTagResponse = new ETagResponse(string.Empty, string.Empty);
             var sut = new SqsAddressChangePostalCodeHandler(
                 Container.Resolve<IConfiguration>(),
                 new FakeRetryPolicy(),
-                MockTicketing(result => { etag = result; }).Object,
+                MockTicketing(result => { eTagResponse = result; }).Object,
                 _streetNames,
                 new IdempotentCommandHandler(Container.Resolve<ICommandHandlerResolver>(), _idempotencyContext));
 
@@ -83,7 +82,7 @@ namespace AddressRegistry.Tests.BackOffice.Lambda
             // Assert
             var stream = await Container.Resolve<IStreamStore>().ReadStreamBackwards(
                 new StreamId(new StreetNameStreamId(new StreetNamePersistentLocalId(streetNamePersistentLocalId))), 2, 1);
-            stream.Messages.First().JsonMetadata.Should().Contain(etag!.LastEventHash);
+            stream.Messages.First().JsonMetadata.Should().Contain(eTagResponse.ETag);
         }
     }
 }

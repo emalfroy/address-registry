@@ -42,14 +42,14 @@ namespace AddressRegistry.Tests.BackOffice.Lambda
         {
             var streetNamePersistentLocalId = new StreetNamePersistentLocalId(123);
             var addressPersistentLocalId = new AddressPersistentLocalId(456);
-            var niscode = new NisCode("12345");
+            var nisCode = new NisCode("12345");
             var postalCode = new PostalCode("2018");
             var houseNumber = new HouseNumber("11");
 
             ImportMigratedStreetName(
                 new StreetNameId(Guid.NewGuid()),
                 streetNamePersistentLocalId,
-                niscode);
+                nisCode);
 
             ProposeAddress(
                 streetNamePersistentLocalId,
@@ -57,14 +57,13 @@ namespace AddressRegistry.Tests.BackOffice.Lambda
                 postalCode,
                 Fixture.Create<MunicipalityId>(),
                 houseNumber,
-                null
-                );
+                null);
 
-            var eTag = new ETagResponse(string.Empty);
+            var eTagResponse = new ETagResponse(string.Empty, string.Empty);
             var sut = new SqsAddressDeregulateHandler(
                 Container.Resolve<IConfiguration>(),
                 new FakeRetryPolicy(),
-                MockTicketing(result => { eTag = result; }).Object,
+                MockTicketing(result => { eTagResponse = result; }).Object,
                 _streetNames,
                 new IdempotentCommandHandler(Container.Resolve<ICommandHandlerResolver>(), _idempotencyContext));
 
@@ -85,7 +84,7 @@ namespace AddressRegistry.Tests.BackOffice.Lambda
             // Assert
             var stream = await Container.Resolve<IStreamStore>().ReadStreamBackwards(
                 new StreamId(new StreetNameStreamId(new StreetNamePersistentLocalId(streetNamePersistentLocalId))), 2, 1);
-            stream.Messages.First().JsonMetadata.Should().Contain(eTag.LastEventHash);
+            stream.Messages.First().JsonMetadata.Should().Contain(eTagResponse.ETag);
         }
     }
 }

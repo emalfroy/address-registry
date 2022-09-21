@@ -78,11 +78,11 @@ namespace AddressRegistry.Tests.BackOffice.Lambda
                 streetNamePersistentLocalId,
                 nisCode);
 
-            var eTag = new ETagResponse(string.Empty);
+            var eTagResponse = new ETagResponse(string.Empty, string.Empty);
             var sut = new SqsAddressProposeHandler(
                 Container.Resolve<IConfiguration>(),
                 new FakeRetryPolicy(),
-                MockTicketing(result => { eTag = result; }).Object,
+                MockTicketing(result => { eTagResponse = result; }).Object,
                 _streetNames,
                 new IdempotentCommandHandler(Container.Resolve<ICommandHandlerResolver>(), _idempotencyContext),
                 _backOfficeContext,
@@ -113,7 +113,7 @@ namespace AddressRegistry.Tests.BackOffice.Lambda
             // Assert
             var stream = await Container.Resolve<IStreamStore>().ReadStreamBackwards(
                 new StreamId(new StreetNameStreamId(new StreetNamePersistentLocalId(streetNamePersistentLocalId))), 1, 1);
-            stream.Messages.First().JsonMetadata.Should().Contain(eTag.LastEventHash);
+            stream.Messages.First().JsonMetadata.Should().Contain(eTagResponse.ETag);
         }
     }
 }
