@@ -103,6 +103,22 @@ namespace AddressRegistry.StreetName
             }
         }
 
+        public void CorrectRetirement()
+        {
+            GuardNotRemovedAddress();
+
+            switch (Status)
+            {
+                case AddressStatus.Current:
+                    return;
+                case AddressStatus.Proposed or AddressStatus.Rejected:
+                    throw new AddressHasInvalidStatusException();
+                case AddressStatus.Retired:
+                    Apply(new AddressRetirementWasCorrected(_streetNamePersistentLocalId, AddressPersistentLocalId));
+                    break;
+            }
+        }
+
         public void Reject()
         {
             GuardNotRemovedAddress();
